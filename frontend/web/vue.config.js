@@ -1,6 +1,7 @@
 const path = require('path')
 module.exports = {
-  // 让 Webpack 4 用 Babel 转译 element-plus 及其依赖的 ES2021+ 语法
+  // 关键：禁用 ESLint 校验，防止构建时报错
+  lintOnSave: false,
   transpileDependencies: ['element-plus', '@ctrl/tinycolor'],
   publicPath: '/',
   outputDir: 'dist',

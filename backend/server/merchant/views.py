@@ -101,6 +101,13 @@ def dashboard(request):
 
     trend_data = [{'date': k, 'count': v['count'], 'revenue': v['revenue']} for k, v in sorted(trend_dict.items())]
 
+    # 排行榜 (Top 5 畅销商品)
+    top_products_qs = Product.objects.filter(is_deleted=False).order_by('-sales')[:5]
+    top_products = [{'id': p.id, 'name': p.name, 'sales': p.sales} for p in top_products_qs]
+
+    # 订单状态分布
+    status_distribution = list(OrderInfo.objects.values('status').annotate(count=Count('id')))
+
     return Response({
         'orders': {
             'total': total_orders,
@@ -120,6 +127,8 @@ def dashboard(request):
             'pending': pending_aftersales,
         },
         'trend': trend_data,
+        'top_products': top_products,
+        'status_distribution': status_distribution,
     })
 
 

@@ -335,6 +335,29 @@ def admin_toggle_user_status(request, user_id):
 
 
 @api_view(['POST'])
+def admin_reset_user_password(request, user_id):
+    """强制重置用户密码为默认值 (pet123456)"""
+    err, admin = _require_superuser(request)
+    if err:
+        return err
+
+    user = User.objects.filter(id=user_id, is_deleted=False).first()
+    if not user:
+        return Response({'detail': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+    if user.is_superuser:
+        return Response({'detail': '不能重置超级管理员的密码'}, status=status.HTTP_400_BAD_REQUEST)
+
+    default_pwd = 'pet123456'
+    user.set_password(default_pwd)
+    user.save()
+
+    return Response({
+        'detail': f'密码已成功重置为默认密码: {default_pwd}',
+    })
+
+
+@api_view(['POST'])
 def admin_grant_staff(request, user_id):
     """授予 / 撤销商家管理员权限 (is_staff)"""
     err, admin = _require_superuser(request)

@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,9 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'tq%piy+c3pntex*%)7m&1xoo1&1hb6cp2v42eyqaj)%f%jxc&5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', '114.215.167.184', 'localhost', '127.0.0.1']
+
+# 环境变量：在 Docker 中会自动使用 'db'，本地开发时使用 '127.0.0.1'
+DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
 
 
 INSTALLED_APPS = [
@@ -68,14 +72,17 @@ WSGI_APPLICATION = 'server.wsgi.application'
 
 
 
+# 根据数据库地址自动选择端口：本地开发用 3307，Docker 内部用 3306
+DB_PORT = '3307' if DB_HOST == '127.0.0.1' else '3306'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'e',
         'USER': 'root',
         'PASSWORD': '123456xqy',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
 

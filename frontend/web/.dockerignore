@@ -1,0 +1,10 @@
+node_modules/
+src/
+public/
+.git
+.gitignore
+.dockerignore
+README.md
+package.json
+package-lock.json
+# 千万不要在此忽略 dist/，因为 Dockerfile 需要将其拷贝进镜像

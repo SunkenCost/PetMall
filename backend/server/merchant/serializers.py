@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from commodity.models import Product, Category, Inventory, InventoryLog
-from shopper.models import OrderInfo, OrderItem
+from shopper.models import OrderInfo, OrderItem, PetProfile
 from aftersales.models import AfterSales
 from accounts.models import User
 
@@ -64,10 +64,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product_name', 'product_price', 'quantity', 'subtotal']
 
 
+class PetSimpleSerializer(serializers.ModelSerializer):
+    gender_display = serializers.CharField(source='get_gender_display', read_only=True)
+    size_display = serializers.CharField(source='get_size_display', read_only=True)
+
+    class Meta:
+        model = PetProfile
+        fields = ['id', 'pet_name', 'pet_type', 'breed', 'gender_display', 'size_display', 'birthday']
+
+
 class MerchantOrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, source='orderitem_set', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    user_pets = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderInfo
@@ -78,8 +88,15 @@ class MerchantOrderSerializer(serializers.ModelSerializer):
             'logistics_no',
             'payment_time', 'delivery_time',
             'create_time', 'update_time',
-            'items',
+            'items', 'user_pets',
         ]
+
+    def get_user_pets(self, obj):
+        # 核心亮点：查询该买家名下的宠物档案
+        if obj.user:
+            pets = obj.user.petprofile_set.all()
+            return PetSimpleSerializer(pets, many=True).data
+        return []
 
 
 class MerchantAfterSalesSerializer(serializers.ModelSerializer):

@@ -125,6 +125,47 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 底部分析区域 -->
+    <el-row :gutter="20" class="mt-20">
+      <el-col :span="12">
+        <el-card shadow="hover" class="rank-card">
+          <template #header>
+            <div class="card-header"><span class="font-bold">爆款商品 Top 5</span></div>
+          </template>
+          <div v-if="topProducts.length === 0" class="empty-placeholder-small">
+            <el-empty description="暂无售出商品" :image-size="60" />
+          </div>
+          <div class="rank-list" v-else>
+            <div v-for="(item, index) in topProducts" :key="item.id" class="rank-item">
+              <div class="rank-index" :class="'top-' + (index + 1)">{{ index + 1 }}</div>
+              <div class="rank-name">{{ item.name }}</div>
+              <div class="rank-sales">{{ item.sales }} 件</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      
+      <el-col :span="12">
+        <el-card shadow="hover" class="rank-card">
+          <template #header>
+            <div class="card-header"><span class="font-bold">总体订单状态分布</span></div>
+          </template>
+          <div v-if="statusDistribution.length === 0" class="empty-placeholder-small">
+            <el-empty description="暂无订单" :image-size="60" />
+          </div>
+          <div class="status-list" v-else>
+            <div v-for="st in statusDistribution" :key="st.status" class="status-item">
+              <div class="status-name">{{ statusMap[st.status] || st.status }}</div>
+              <div class="status-bar-wrap">
+                 <div class="status-bar" :style="{ width: (st.count / totalOrderStatusCount * 100) + '%' }"></div>
+              </div>
+              <div class="status-count">{{ st.count }} 单</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -152,7 +193,17 @@ export default {
       aftersales: { pending: 0 },
     })
     const trendData = ref([])
+    const topProducts = ref([])
+    const statusDistribution = ref([])
     const chartTimeRange = ref('30')
+
+    const statusMap = {
+      'PENDING': '待支付',
+      'PAID': '待发货',
+      'SHIPPED': '已发货',
+      'COMPLETED': '已完成',
+      'CLOSED': '已关闭'
+    }
 
     const formatMoney = (val) => Number(val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -164,6 +215,8 @@ export default {
         })
         stats.value = res.data
         trendData.value = res.data.trend || []
+        topProducts.value = res.data.top_products || []
+        statusDistribution.value = res.data.status_distribution || []
       } catch (e) {
         console.error('看板数据加载失败', e)
       }
@@ -194,10 +247,15 @@ export default {
       { label: '商品总数', value: stats.value.products.total, icon: 'Box', type: 'info', trend: 0.5 },
     ])
 
+    const totalOrderStatusCount = computed(() => {
+      return statusDistribution.value.reduce((acc, curr) => acc + curr.count, 0) || 1
+    })
+
     onMounted(loadDashboard)
 
     return { 
       stats, trendData, chartTimeRange, filteredTrendData,
+      topProducts, statusDistribution, statusMap, totalOrderStatusCount,
       formatMoney, getBarHeight, maxTrendValue,
       topStats, totalAlerts 
     }
@@ -362,4 +420,70 @@ export default {
   justify-content: center;
   height: 280px;
 }
+.empty-placeholder-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+}
+
+/* 底部排名卡片 */
+.rank-card { height: 260px; }
+.rank-list, .status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+.rank-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+.rank-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f4f4f5;
+  color: #909399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 12px;
+}
+.rank-index.top-1 { background: #fef0f0; color: #f56c6c; }
+.rank-index.top-2 { background: #fdf6ec; color: #e6a23c; }
+.rank-index.top-3 { background: #ecf5ff; color: #409eff; }
+.rank-name {
+  flex: 1;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rank-sales { color: #909399; font-weight: 500; }
+
+.status-item {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+.status-name { width: 60px; color: #606266; }
+.status-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: #ebeef5;
+  border-radius: 4px;
+  margin: 0 12px;
+  overflow: hidden;
+}
+.status-bar {
+  height: 100%;
+  background: #67c23a;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.status-count { width: 40px; text-align: right; color: #909399; }
 </style>

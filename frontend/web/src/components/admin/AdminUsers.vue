@@ -97,6 +97,13 @@
               </el-button>
               <el-button 
                 size="small"
+                type="info" plain
+                @click="resetPassword(row)"
+              >
+                重置密码
+              </el-button>
+              <el-button 
+                size="small"
                 :type="row.is_staff ? 'warning' : 'primary'" 
                 @click="grantStaff(row)"
               >
@@ -202,6 +209,14 @@ export default {
       } catch (e) { if (e !== 'cancel') ElMessage.error('操作失败') }
     }
 
+    const resetPassword = async (user) => {
+      try {
+        await ElMessageBox.confirm(`确定要将普通用户「${user.username}」的密码重置为默认密码(pet123456)吗？`, '重置密码', { type: 'warning' })
+        const res = await axios.post(`/api/accounts/admin/users/${user.id}/reset-password/`)
+        ElMessage.success(res.data.detail)
+      } catch (e) { if (e !== 'cancel') ElMessage.error(e.response?.data?.detail || '操作失败') }
+    }
+
     const getRoleLabel = (user) => {
       if (user.is_superuser) return '超级管理员'
       if (user.is_staff) return '商家运营'
@@ -222,7 +237,7 @@ export default {
     return {
       loading, users, totalCount, currentPage, pageSize,
       userStats, filters, fetchUsers, resetFilters, _loadPage,
-      getRoleLabel, getRoleTagType, toggleStatus, grantStaff,
+      getRoleLabel, getRoleTagType, toggleStatus, grantStaff, resetPassword,
       Search, Refresh, Message, Iphone
     }
   }

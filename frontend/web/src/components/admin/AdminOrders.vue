@@ -44,7 +44,49 @@
             <span class="value">{{ order.order_no }}</span>
           </div>
           <div class="order-meta">
-            <span class="meta-item">买家：{{ order.username }}</span>
+            <span class="meta-item">
+              买家：<strong>{{ order.username }}</strong>
+              <el-popover
+                v-if="order.user_pets && order.user_pets.length > 0"
+                placement="right"
+                title="买家宠物档案"
+                :width="300"
+                trigger="hover"
+                effect="light"
+              >
+                <template #reference>
+                  <el-tag size="small" class="ml-8 cursor-pointer pet-tag" type="success" effect="light">
+                    <el-icon><Star /></el-icon> 宠物档案
+                  </el-tag>
+                </template>
+                <div class="pet-popover-content">
+                  <div v-for="(pet, index) in order.user_pets" :key="pet.id" class="pet-item">
+                    <div class="pet-main-info">
+                      <span class="pet-name">{{ pet.pet_name }}</span>
+                      <el-tag size="small" type="primary" effect="dark" round class="ml-8">{{ pet.pet_type }}</el-tag>
+                    </div>
+                    <div class="pet-sub-info">
+                      <template v-if="pet.breed">
+                        <span class="info-label">品种: </span><span class="info-value">{{ pet.breed }}</span>
+                        <span class="info-divider" v-if="pet.size_display || pet.gender_display || pet.birthday">|</span>
+                      </template>
+                      <template v-if="pet.size_display">
+                        <span class="info-label">体型: </span><span class="info-value">{{ pet.size_display }}</span>
+                        <span class="info-divider" v-if="pet.gender_display || pet.birthday">|</span>
+                      </template>
+                      <template v-if="pet.gender_display">
+                        <span class="info-label">性别: </span><span class="info-value">{{ pet.gender_display }}</span>
+                        <span class="info-divider" v-if="pet.birthday">|</span>
+                      </template>
+                      <template v-if="pet.birthday">
+                        <span class="info-label">生日: </span><span class="info-value">{{ pet.birthday }}</span>
+                      </template>
+                    </div>
+                    <el-divider v-if="index < order.user_pets.length - 1" style="margin: 12px 0;" />
+                  </div>
+                </div>
+              </el-popover>
+            </span>
             <span class="meta-item">下单：{{ formatTime(order.create_time) }}</span>
           </div>
           <el-tag :type="statusStyle[order.status]" size="small">
@@ -140,12 +182,12 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Location, Van, CircleCheck, Close } from '@element-plus/icons-vue'
+import { Search, Location, Van, CircleCheck, Close, Star } from '@element-plus/icons-vue'
 import axios from '@/axios'
 
 export default {
   name: 'AdminOrders',
-  components: { Search, Location, Van, CircleCheck, Close },
+  components: { Search, Location, Van, CircleCheck, Close, Star },
   setup() {
     const orders = ref([])
     const loading = ref(false)
@@ -376,4 +418,44 @@ export default {
 .dialog-info { background: #f8f9fa; border-radius: 8px; padding: 12px 16px; }
 .dialog-info p { margin: 6px 0; color: #606266; font-size: 14px; }
 .mr-4 { margin-right: 4px; }
+.ml-8 { margin-left: 8px; }
+
+/* 宠物气泡样式 */
+.pet-popover-content {
+  display: flex;
+  flex-direction: column;
+}
+.pet-item {
+  padding: 4px 0;
+}
+.pet-main-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.pet-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+.pet-tag { transition: all 0.2s; }
+.pet-tag:hover { opacity: 0.8; }
+.pet-sub-info {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  line-height: 1.5;
+}
+.info-label {
+  color: #909399;
+}
+.info-value {
+  color: #606266;
+}
+.info-divider {
+  color: #dcdfe6;
+  margin: 0 6px;
+  font-size: 12px;
+}
 </style>

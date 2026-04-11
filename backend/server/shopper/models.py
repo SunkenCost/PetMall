@@ -9,7 +9,18 @@ class PetProfile(models.Model):
     pet_name = models.CharField('宠物昵称', max_length=50)
     pet_type = models.CharField('物种类别', max_length=20)
     breed = models.CharField('细分品种', max_length=50, null=True, blank=True)
-    gender = models.SmallIntegerField('性别', default=0) # 0未知 1公 2母
+    GENDER_CHOICES = (
+        (0, '未知'),
+        (1, '雄性'),
+        (2, '雌性'),
+    )
+    gender = models.SmallIntegerField('性别', choices=GENDER_CHOICES, default=0)
+    SIZE_CHOICES = (
+        ('SMALL', '小型'),
+        ('MEDIUM', '中型'),
+        ('LARGE', '大型'),
+    )
+    size = models.CharField('体型', max_length=20, choices=SIZE_CHOICES, null=True, blank=True)
     birthday = models.DateField('破壳日', null=True, blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)

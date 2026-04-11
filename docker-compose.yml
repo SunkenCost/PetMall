@@ -1,0 +1,53 @@
+services:
+  db:
+    image: m.daocloud.io/docker.io/library/mysql:8.0
+    container_name: petmall_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456xqy
+      MYSQL_DATABASE: e
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - petnet
+
+  backend:
+    build: ./backend/server
+    container_name: petmall_backend
+    restart: always
+    depends_on:
+      - db
+    volumes:
+      - ./backend/server:/app
+      - ./backend/server/media:/app/media
+      - ./test:/app/test
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+    command: sh -c "python manage.py makemigrations && python manage.py migrate --fake-initial && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - petnet
+        
+  frontend:
+    build: ./frontend/web
+    container_name: petmall_frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./backend/server/media:/app/media
+      - ./frontend/web/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - petnet
+
+networks:
+  petnet:
+
+volumes:
+  db_data:

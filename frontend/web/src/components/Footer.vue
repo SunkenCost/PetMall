@@ -39,7 +39,7 @@
         <a href="javascript:;" class="footer-link">关于货源</a>
       </nav>
 
-      <p class="footer-copy">© 2026 宠爱之家 PetMall   版权所有 ·  谢奇鹰</p>
+      <p class="footer-copy">© 2026 宠爱之家 PetMall   版权所有 ·  xie</p>
     </div>
   </footer>
 </template>
