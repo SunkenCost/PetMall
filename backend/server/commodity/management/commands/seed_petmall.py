@@ -11,10 +11,10 @@ from shopper.models import Address, OrderInfo, OrderItem, PetProfile, Cart
 from aftersales.models import AfterSales
 
 class Command(BaseCommand):
-    help = '专业的 PetMall 全业务数据种子初始化指令'
+    help = 'PetMal数据种子初始化'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('🚀 开始执行 PetMall 全业务数据种子注入...'))
+        self.stdout.write(self.style.SUCCESS('[Init] Starting PetMall data seeding...'))
 
         try:
             with transaction.atomic():
@@ -22,9 +22,9 @@ class Command(BaseCommand):
                 self.seed_categories_and_products()
                 self.seed_orders_and_aftersales()
             
-            self.stdout.write(self.style.SUCCESS('\n🎉 所有业务数据注入成功！网站已进入“全家桶”展示模式。'))
+            self.stdout.write(self.style.SUCCESS('[Success] All data seeded successfully.'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'❌ 注入失败: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'[Error] Seeding failed: {str(e)}'))
 
     def seed_roles_and_users(self):
         self.stdout.write('--- [1/3] 注入用户体系 ---')
@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 phone='13811112222',
                 role=admin_role
             )
-            self.stdout.write(f'✅ 创建超级管理员: admin')
+            self.stdout.write(f'  - Superuser created: admin')
 
         # 3. 创建测试用户 (复用你的张阿猫、李傻狗、王金鱼数据)
         users_data = [
@@ -62,7 +62,7 @@ class Command(BaseCommand):
             if created:
                 user.set_password('123456')
                 user.save()
-                self.stdout.write(f'✅ 创建测试用户: {user.username}')
+                self.stdout.write(f'  - Test user created: {user.username}')
                 
                 # 为用户创建地址
                 Address.objects.get_or_create(
@@ -126,7 +126,7 @@ class Command(BaseCommand):
                 defaults={'current_quantity': random.randint(50, 200)}
             )
             if created:
-                self.stdout.write(f'✅ 注入商品: {pd["name"]}')
+                self.stdout.write(f'  - Product created: {pd["name"]}')
 
     def seed_orders_and_aftersales(self):
         self.stdout.write('--- [3/3] 注入交易流水与售后单 ---')
@@ -179,4 +179,4 @@ class Command(BaseCommand):
                     status='APPLYING'
                 )
             
-            self.stdout.write(f'✅ 模拟订单: {order.order_no} ({order.status})')
+            self.stdout.write(f'  - Order created: {order.order_no} ({order.status})')
