@@ -11,7 +11,7 @@ SECRET_KEY = 'tq%piy+c3pntex*%)7m&1xoo1&1hb6cp2v42eyqaj)%f%jxc&5'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*', '114.215.167.184', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*', '114.215.167.184', '0048600.xyz', 'www.0048600.xyz', 'localhost', '127.0.0.1']
 
 # 环境变量：在 Docker 中会自动使用 'db'，本地开发时使用 '127.0.0.1'
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
@@ -165,9 +165,10 @@ CORS_ALLOW_HEADERS = (
 
 # 允许前端开发服务器通过 CSRF 校验（django_login 写入 Session 后需要此配置）
 CSRF_TRUSTED_ORIGINS = [
+    'https://0048600.xyz',
+    'https://www.0048600.xyz',
+    'https://114.215.167.184',
     'http://localhost:8010',
-    'http://127.0.0.1:8010',
-    'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
 

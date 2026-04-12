@@ -36,32 +36,37 @@
 
 ## 🚀 部署指南
 
-### 1. 数据库准备
-1. 创建 MySQL 数据库（建议命名为 `e`）。
-2. 执行本项目提供的数据库初始化脚本（需确保安装了 MySQL 环境）。
+本项目推荐使用 **Docker** 进行快速部署，同时也支持传统的本地原生开发模式。
 
-### 2. 后端配置 (Django)
-1. 进入 `backend/server` 目录。
-2. 安装环境依赖：
+### 方式一：Docker 一键部署 (推荐)
+适合快速预览或生产部署，无需手动安装数据库和环境。
+1. **启动服务**：`docker-compose up -d --build`
+2. **初始化数据**：
    ```bash
-   pip install -r requirements.txt
+   docker exec petmall_backend python manage.py migrate
+   docker exec petmall_backend python test/backend_scripts/test_init_data.py
    ```
-3. 确保 `settings.py` 中的数据库配置与您本地一致。
-4. 启动后端服务器：
-   ```bash
-   python manage.py runserver
-   ```
+3. **访问地址**：前台 `http://localhost`，后台管理 `http://localhost/admin`
 
-### 3. 前端配置 (Vue)
-1. 进入 `frontend/web` 目录。
-2. 安装 npm 依赖：
-   ```bash
-   npm install
-   ```
-3. 启动开发模式：
-   ```bash
-   npm run dev
-   ```
+### 方式二：本地开发
+不依赖 Docker，所有组件均运行在本地实机环境中。
+
+1. **数据库准备**：
+   - 确保本地已安装运行 **MySQL** (推荐 5.7+ 或 8.0+)。
+   - 创建名为 `e` 的数据库：`CREATE DATABASE e DEFAULT CHARACTER SET utf8mb4;`。
+   - 执行数据库同步：`python backend/server/manage.py migrate`。
+   - 初始数据灌入：`python backend/server/test/backend_scripts/test_init_data.py`。
+
+2. **启动后端 (Django)**：
+   - 进入目录：`cd backend/server`
+   - 安装依赖：`pip install -r requirements.txt`
+   - 启动：`python manage.py runserver` (默认连接本地 3306 端口)
+
+3. **启动前端 (Vue)**：
+   - 进入目录：`cd frontend/web`
+   - 安装依赖：`npm install`
+   - 启动：`npm run dev`
+
 
 ## 📜 项目申明
 
