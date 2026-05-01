@@ -16,4 +16,4 @@ docker-compose up -d --build
 echo "Updating database schema..."
 docker-compose exec -T backend python manage.py migrate
 
-echo "Deployment completed. Service is available at http://114.215.167.184"
+echo "Deployment completed"

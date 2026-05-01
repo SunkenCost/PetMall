@@ -13,7 +13,11 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*', '114.215.167.184', 'localhost', '127.0.0.1']
 
-# 环境变量：在 Docker 中会自动使用 'db'，本地开发时使用 '127.0.0.1'
+# 【数据库切换开关】
+# True: 连接本地原生安装的 MySQL (默认 3306)
+# False: 连接 Docker 容器映射出的 MySQL (默认 3307)
+USE_LOCAL_MYSQL = True
+
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
 
 
@@ -72,8 +76,13 @@ WSGI_APPLICATION = 'server.wsgi.application'
 
 
 
-# 根据数据库地址自动选择端口：本地开发用 3307，Docker 内部用 3306
-DB_PORT = '3307' if DB_HOST == '127.0.0.1' else '3306'
+# 自动选择端口：
+# 如果是本地回环地址且开启了 USE_LOCAL_MYSQL，则用 3306；否则如果是本地回环则用 3307（给 Docker 用）；
+# 如果是在 Docker 容器内部（DB_HOST='db'），则直接用 3306。
+if DB_HOST == '127.0.0.1':
+    DB_PORT = '3306' if USE_LOCAL_MYSQL else '3307'
+else:
+    DB_PORT = '3306'
 
 DATABASES = {
     'default': {

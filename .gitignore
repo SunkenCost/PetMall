@@ -31,3 +31,5 @@ Desktop.ini
 .agent/
 .antigravityignore
 test/
+
+*.zip
