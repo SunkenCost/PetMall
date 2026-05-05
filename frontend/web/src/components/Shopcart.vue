@@ -117,14 +117,22 @@ export default {
           address_id: selectedAddress.value,
           cart_item_ids: itemIds
         })
-        ElMessage.success({ message: `结账成功啦！你的猫条在路上~ 订单号：${res.data.order_no}`, type: 'success' })
+        const orderNo = res.data.order_no
+        ElMessage.success({ message: `结账成功啦！订单号：${orderNo}，正在跳转支付...`, type: 'success' })
         emit('close')
-        setTimeout(() => {
-           window.location.reload() // 简单粗暴清空状态
-        }, 1500)
+        
+        // 自动发起支付请求并跳转
+        try {
+          const payRes = await axios.post('/api/shopper/pay/create_payment/', { order_no: orderNo })
+          if (payRes.data.pay_url) {
+             window.location.href = payRes.data.pay_url
+          }
+        } catch (e) {
+           ElMessage.error('获取支付链接失败，请去订单页手动支付')
+           setTimeout(() => window.location.reload(), 1500)
+        }
       } catch (err) {
         ElMessage.error(err.response?.data?.detail || '结账失败，可能商品被抢光了')
-      } finally {
         checkoutLoading.value = false
       }
     }

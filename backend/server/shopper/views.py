@@ -2,10 +2,16 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Address, Cart, CartItem, OrderInfo, OrderItem, PetProfile
-from .serializers import AddressSerializer, CartSerializer, CartItemSerializer, OrderInfoSerializer, PetProfileSerializer
+from .serializers import AddressSerializer, CartSerializer, CartItemSerializer, OrderInfoSerializer, PetProfileSerializer, PaymentRequestSerializer
 from commodity.models import Product, Inventory
 from accounts.models import User
 from django.db import transaction
+from django.conf import settings
+from django.http import HttpResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.utils import timezone
+from .pays import get_pay_url, verify_alipay_callback
 import time
 import random
 
@@ -178,3 +184,135 @@ class OrderViewSet(UserResourceViewSet):
             item.delete() # 结算后从购物车移除
             
         return Response({'detail': '订单创建成功', 'order_no': order.order_no}, status=status.HTTP_201_CREATED)
+
+
+class PaymentViewSet(viewsets.GenericViewSet):
+    """支付宝支付接口"""
+    serializer_class = PaymentRequestSerializer
+    
+    @action(detail=False, methods=['post'])
+    def create_payment(self, request):
+        """创建支付请求，返回支付宝支付链接
+        
+        请求体: { "order_no": "O20250101..." }
+        返回: { "pay_url": "https://..." }
+        """
+        user = request.user if request.user.is_authenticated else User.objects.filter(username='test1').first()
+        if not user:
+            return Response({'detail': '请先登录'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        order_no = request.data.get('order_no')
+        if not order_no:
+            return Response({'detail': '缺少订单号'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            order = OrderInfo.objects.get(order_no=order_no, user=user)
+        except OrderInfo.DoesNotExist:
+            return Response({'detail': '订单不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # 只有待支付订单才能发起支付
+        if order.status != 'PENDING':
+            return Response({'detail': f'当前订单状态为 {order.status}，无法支付'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 构建商品标题（取第一个商品名）
+        first_item = order.orderitem_set.first()
+        subject = first_item.product_name if first_item else "PetMall订单"
+        
+        # 生成支付链接
+        return_url = settings.ALIPAY_RETURN_URL
+        pay_url = get_pay_url(
+            out_trade_no=order.order_no,
+            total_amount=order.total_amount,
+            subject=subject,
+            return_url=return_url,
+        )
+        
+        return Response({'pay_url': pay_url, 'order_no': order.order_no, 'total_amount': str(order.total_amount)})
+    
+    @action(detail=False, methods=['get'], url_path='return')
+    def payment_return(self, request):
+        """支付宝同步回调页面
+        
+        用户支付完成后从支付宝跳转回来，携带订单信息
+        注意：同步回调不做状态变更，状态由异步通知(notify)负责
+        """
+        out_trade_no = request.query_params.get('out_trade_no', '')
+        trade_no = request.query_params.get('trade_no', '')
+        total_amount = request.query_params.get('total_amount', '')
+        
+        # 返回前端完整 URL（使用 http://localhost:8010 前端地址）
+        from django.http import HttpResponseRedirect
+        frontend_url = f"http://localhost:8010/#/payment-result?out_trade_no={out_trade_no}&trade_no={trade_no}&total_amount={total_amount}"
+        return HttpResponseRedirect(frontend_url)
+    
+    @action(detail=False, methods=['post'], url_path='notify')
+    @method_decorator(csrf_exempt)
+    def payment_notify(self, request):
+        """支付宝异步通知回调"""
+        callback_data = request.POST.dict()
+        
+        print(f"==================== 收到支付宝回调 ====================")
+        print(f"Callback Data: {callback_data}")
+        
+        # 验证签名
+        if not verify_alipay_callback(callback_data):
+            print(f"!!! 支付宝异步通知 签名验证失败 !!!")
+            return HttpResponse('fail')
+        
+        out_trade_no = callback_data.get('out_trade_no')
+        trade_status = callback_data.get('trade_status')
+        
+        print(f"订单号: {out_trade_no}, 状态: {trade_status}")
+        
+        # 只有 TRADE_SUCCESS 和 TRADE_FINISHED 才更新订单
+        if trade_status in ('TRADE_SUCCESS', 'TRADE_FINISHED'):
+            try:
+                order = OrderInfo.objects.get(order_no=out_trade_no)
+                callback_amount = callback_data.get('total_amount', '0')
+                print(f"订单金额: {order.total_amount}, 回调金额: {callback_amount}")
+                
+                # 兼容可能是类似 146.0 和 146.00 的情况
+                if float(order.total_amount) != float(callback_amount):
+                    print(f"!!! 金额不匹配，订单失败 !!!")
+                    return HttpResponse('fail')
+                
+                if order.status == 'PENDING':
+                    order.status = 'PAID'
+                    order.payment_method = 'alipay'
+                    order.payment_time = timezone.now()
+                    order.save()
+                    print(f"订单 {out_trade_no} 状态已成功更新为 PAID")
+                else:
+                    print(f"订单 {out_trade_no} 状态已经是 {order.status}，无需重复更新")
+            except OrderInfo.DoesNotExist:
+                print(f"!!! 订单不存在: {out_trade_no} !!!")
+                return HttpResponse('fail')
+        
+        # 返回 success 告诉支付宝已收到通知
+        return HttpResponse('success')
+    
+    @action(detail=False, methods=['get'], url_path='query')
+    def payment_query(self, request):
+        """查询订单支付状态
+        
+        请求参数: ?order_no=O20250101...
+        返回: { "status": "PAID", "order_no": "..." }
+        """
+        user = request.user if request.user.is_authenticated else User.objects.filter(username='test1').first()
+        if not user:
+            return Response({'detail': '请先登录'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        order_no = request.query_params.get('order_no')
+        if not order_no:
+            return Response({'detail': '缺少订单号'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            order = OrderInfo.objects.get(order_no=order_no, user=user)
+            return Response({
+                'order_no': order.order_no,
+                'status': order.status,
+                'payment_method': order.payment_method,
+                'total_amount': str(order.total_amount),
+            })
+        except OrderInfo.DoesNotExist:
+            return Response({'detail': '订单不存在'}, status=status.HTTP_404_NOT_FOUND)

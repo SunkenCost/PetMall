@@ -33,7 +33,7 @@
           
           <div class="order-footer">
             <span>实付款：<strong style="color:var(--primary-color); font-size: 20px;">¥{{ order.total_amount }}</strong></span>
-            <el-button type="primary" v-if="order.status === 'PENDING'" round>立即支付 (Demo)</el-button>
+            <el-button type="primary" v-if="order.status === 'PENDING'" round @click="handlePay(order.order_no)" :loading="payingOrderId === order.order_no">立即支付</el-button>
           </div>
         </el-card>
       </div>
@@ -51,6 +51,7 @@ export default {
   setup() {
     const orders = ref([])
     const loading = ref(false)
+    const payingOrderId = ref(null)
     const statusMap = {
       'PENDING': '待支付',
       'PAID': '已脱单待出库',
@@ -78,9 +79,25 @@ export default {
       return ''
     }
 
+    const handlePay = async (orderNo) => {
+      if (payingOrderId.value) return
+      payingOrderId.value = orderNo
+      try {
+        const res = await axios.post('/api/shopper/pay/create_payment/', {
+          order_no: orderNo
+        })
+        // 在新标签页打开支付链接
+        window.open(res.data.pay_url, '_blank')
+      } catch (err) {
+        ElMessage.error(err.response?.data?.detail || '发起支付失败')
+      } finally {
+        payingOrderId.value = null
+      }
+    }
+
     onMounted(() => fetchOrders())
 
-    return { orders, loading, statusMap, getStatusTag }
+    return { orders, loading, payingOrderId, statusMap, getStatusTag, handlePay }
   }
 }
 </script>

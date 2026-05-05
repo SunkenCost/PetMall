@@ -131,6 +131,7 @@ export default {
           quantity: 1
         })
         ElMessage.success({ message: `成功将 ${item.name} 加入购物车🐾`, type: 'success' })
+        setTimeout(() => window.location.reload(), 800)
       } catch (err) {
         ElMessage.error('加入购物车失败')
       }

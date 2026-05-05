@@ -44,3 +44,8 @@ class OrderInfoSerializer(serializers.ModelSerializer):
         model = OrderInfo
         fields = '__all__'
         read_only_fields = ['user', 'order_no', 'status', 'total_amount'] # 这些由后端结算逻辑生成
+
+
+class PaymentRequestSerializer(serializers.Serializer):
+    """支付请求参数校验"""
+    order_no = serializers.CharField(max_length=32, required=True, help_text='商户订单号')

@@ -75,7 +75,7 @@
           <span>我的购物车</span>
         </div>
       </template>
-      <Shopcart @close="drawerVisible = false" />
+      <Shopcart v-if="drawerVisible" @close="drawerVisible = false" />
     </el-drawer>
 
     <!-- 美观通用的底边栏 -->

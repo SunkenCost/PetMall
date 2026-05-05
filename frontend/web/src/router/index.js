@@ -4,6 +4,7 @@ import Detail from '../components/Detail.vue'
 import Shopper from '../components/Shopper.vue'
 import Login from '../components/Login.vue'
 import Order from '../components/Order.vue'
+import PaymentResult from '../components/PaymentResult.vue'
 import PetProfile from '../components/PetProfile.vue'
 import Error from '../components/Error.vue'
 import AdminLayout from '../components/admin/AdminLayout.vue'
@@ -25,6 +26,7 @@ const routes = [
     { path: '/login', component: Login, meta: { title: '宠物号登录' } },
     { path: '/shopper', component: Shopper, meta: { title: '我的地址档' } },
     { path: '/orders', component: Order, meta: { title: '我的流转单' } },
+    { path: '/payment-result', component: PaymentResult, meta: { title: '支付结果' } },
     { path: '/pets', component: PetProfile, meta: { title: '我的宠物档案' } },
     // 商家管理后台（嵌套路由）
     {

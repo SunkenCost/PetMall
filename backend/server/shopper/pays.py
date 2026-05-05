@@ -1,34 +1,59 @@
-# pip install pycryptodome
-# pip install python-alipay-sdk
-
 from alipay import AliPay
-import time
-alipay_public_key_string = """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnyo8bCCQR7K980byTqj6sm7SrAEBj15820lk4mpw8AUBVVfsoqqdP89zDQFoSaQxaCh4ZUiibfnHTKP7Kbcj3GLkSrY+IU/AqRohoq5tjcl5zKnjtHjaE/lvKqkf8LeJol/KgjU/FxOeajOGAjnYSITm5MyQwqa8bIqiA0SUkB6QFC/6N7KedHfo2+r4k5AscyDdkfHUv3aCha7FfGy5udI0Zx39v+HOlKAF9aWbhzu8LpqJZdGI4qC2M87firT8I3FmxUbr2LOQldLOMyb6ZIQewyMzzA6HZDacbson/4mGhPqft32mjp0HVgJq4MAUKEVIcEKoy8gDJC8iSjx8FwIDAQAB
------END PUBLIC KEY-----"""
-app_private_key_string = """-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAnyo8bCCQR7K980byTqj6sm7SrAEBj15820lk4mpw8AUBVVfsoqqdP89zDQFoSaQxaCh4ZUiibfnHTKP7Kbcj3GLkSrY+IU/AqRohoq5tjcl5zKnjtHjaE/lvKqkf8LeJol/KgjU/FxOeajOGAjnYSITm5MyQwqa8bIqiA0SUkB6QFC/6N7KedHfo2+r4k5AscyDdkfHUv3aCha7FfGy5udI0Zx39v+HOlKAF9aWbhzu8LpqJZdGI4qC2M87firT8I3FmxUbr2LOQldLOMyb6ZIQewyMzzA6HZDacbson/4mGhPqft32mjp0HVgJq4MAUKEVIcEKoy8gDJC8iSjx8FwIDAQABAoIBAHQ8jxXUDioeUfQ5armhVDw9DOOKdI40TfCDQAbN/x56OUgPRwRgnyg7ouTrkzK8k0xiydIF4oF4OWEyHDmRwsGvAtPBFcyUBro4GDpLMjyq16VsqJti6rhNoC7Chk3wa7ZGSIkgw6thq34ZlJNJlTcYv9p1vn448EBAWiMS0YARepRoWYcCHeJzWUCGIICph22tdCWS7d3MUYPD+VN2UbdVKXx1zlVyCQ2kuJraH+NU3awZnluUuHpaJ5DP8le1GwRaOjyzC+h7V49SAW96ZXjaspew4hB0uUNtZ5mZ1+7W5qTjK6R0/A30CTo/qGbAUS+EQJtTjcfnd1IIQ8NrMBkCgYEA1VZ3lHoxRJhaFRV7hTIW14gUwJFJfHElXL0KZxgVHBZGQ8VmZPdOE2a+VeHM7MR7qG+RiubnGfVSaXLoYDJi8Ar9X4Bkki60lKvPR4Bm4SB98y2UAL0oEbPFAJL3ivwevcIuWqQE2eUvxcWV9YCRV8IvPTcBkG5qOvSLZXMX+l0CgYEAvv532oDNqyitpeIHJKcOfmyFhDaa/JB7Hj3Q7IYd2lbS40GeYNKhgc85hP1chZaicHUiXdJINsIzoCyG0n0r5qKgyMCfUMg8p96v8l9wIlHnRIjOI+4PQbbDNHikeLZr9VgxCJEbZUT4VdGRTZVpAv5RDSgl27/Y+DHIBnEf8QMCgYABV1XRHSOKJtsKHuRz5ei22ignPcKUgbGWb6nNFB2t24X9jxQhtlxLSu4PZCgBpQqR+IGVufXh9+TYvNwxHp/4mlkVbJ01Pg3skVfwPyJmb+nayYKQrp+93L90TXg463TWBI5+C2HsbMBsId3beT9wqcvaOqpL2iXY0Qi/ToXsEQKBgBSFv1cpM/BKRK5oZSAZG0OWYZpdS7YLyE7tkX94wchuP+bPbDc3KseJ/sI9fy2TjAzNaU3vhHbt0yJI5ovDi24S13f6yqOhgHMBSKKggqoNZu5ETPIraFRFUSBYPkQCRgNs4IftH6Z4DL8b76MIhOofbZIeWEMOkD/LCZU3npkFAoGBAL+hHQsD4qTbQd6uIycXZWiIaesMmRpd5sNkR12euR61TQc1sgevzn0DlcoPB+CbzP+wDph6+oKIRwCOq/YEzAEx19yPvVUj40MldaOAZke/icB3gAQQ0k/5gx6m9TeTxkLGiYDgPiTEjwgLrSZmxSknqOVgfH54kA+MGA+ZYPdf
------END RSA PRIVATE KEY-----"""
+from django.conf import settings
 
-def get_pay(out_trade_no, total_amount, return_url):
-    # 实例化支付应用
-    alipay = AliPay(
-        appid="9021000138622595",
-        app_notify_url=None,
-        app_private_key_string=app_private_key_string,
-        alipay_public_key_string=alipay_public_key_string,
-        sign_type="RSA2"
+
+def get_alipay_instance():
+    """获取支付宝 SDK 实例"""
+    return AliPay(
+        appid=settings.ALIPAY_APP_ID,
+        app_notify_url=settings.ALIPAY_APP_NOTIFY_URL,
+        app_private_key_string=settings.ALIPAY_APP_PRIVATE_KEY,
+        alipay_public_key_string=settings.ALIPAY_PUBLIC_KEY,
+        sign_type="RSA2",
+        debug=settings.DEBUG,  # 跟随 Django DEBUG 设置，生产自动切换为正式环境
     )
-    # 发起支付请求
+
+
+def get_pay_url(out_trade_no, total_amount, subject, return_url):
+    """生成支付宝PC网站支付链接
+    
+    Args:
+        out_trade_no: 商户订单号
+        total_amount: 订单总金额（元）
+        subject: 订单标题
+        return_url: 支付完成后同步跳转地址
+        
+    Returns:
+        str: 完整的支付宝支付页面URL
+    """
+    alipay = get_alipay_instance()
+    
     order_string = alipay.api_alipay_trade_page_pay(
-        # 订单号，每次发送请求都不能一样
         out_trade_no=out_trade_no,
-        # 支付金额
         total_amount=str(total_amount),
-        # 交易信息
-        subject="测试",
-        return_url=return_url + '?t=' + out_trade_no,
-        notify_url=return_url + '?t=' + out_trade_no
+        subject=subject,
+        return_url=return_url,
+        notify_url=settings.ALIPAY_APP_NOTIFY_URL,
     )
-    print('https://openapi-sandbox.dl.alipaydev.com/gateway.do?'+ order_string)
-    return 'https://openapi-sandbox.dl.alipaydev.com/gateway.do?'+ order_string
+    
+    return f"{settings.ALIPAY_GATEWAY}?{order_string}"
+
+
+def verify_alipay_callback(data):
+    """验证支付宝异步回调签名
+    
+    Args:
+        data: 支付宝回调的参数字典
+        
+    Returns:
+        bool: 签名验证是否通过
+    """
+    alipay = get_alipay_instance()
+    
+    # 【修复】必须用 pop 把 sign 和 sign_type 剔除出字典，否则参与签名生成会导致验证永远失败
+    data_copy = data.copy()
+    signature = data_copy.pop("sign", "")
+    data_copy.pop("sign_type", None)
+    
+    success = alipay.verify(data_copy, signature)
+    return success
